@@ -239,7 +239,7 @@
                     </table>
                 </div>
                 <div class="btn-group">
-                    <button class="wiki-btn" onclick="fetchWikipediaData()" id="wikiBtn">📡 Update from Wikipedia</button>
+                    <button class="wiki-btn" onclick="fetchMedalData()" id="wikiBtn">📡 Update from ESPN</button>
                     <button class="update-btn" onclick="calculateScores()">🔄 Recalculate Scores</button>
                 </div>
                 <div id="status" class="status hidden"></div>
@@ -382,10 +382,10 @@
             statusEl.className = 'status hidden';
         }
 
-        async function fetchWikipediaData() {
+        async function fetchMedalData() {
             const btn = document.getElementById('wikiBtn');
             btn.disabled = true;
-            showStatus('🔄 Fetching data from Wikipedia...', 'loading');
+            showStatus('🔄 Fetching data from ESPN...', 'loading');
 
             // List of CORS proxies to try (in order)
             const proxies = [
@@ -400,8 +400,8 @@
             // Try each proxy until one works
             for (const proxy of proxies) {
                 try {
-                    const url = proxy + encodeURIComponent('https://en.wikipedia.org/wiki/2026_Winter_Olympics_medal_table');
-                    const response = await fetch(url, { timeout: 10000 });
+                    const url = proxy + encodeURIComponent('https://www.espn.com/olympics/winter/2026/medals');
+                    const response = await fetch(url);
 
                     if (response.ok) {
                         html = await response.text();
@@ -414,64 +414,82 @@
             }
 
             if (!html) {
-                throw new Error('All CORS proxies failed. Please try again later.');
+                showStatus('❌ All proxies failed. Please try again later.', 'error');
+                setTimeout(hideStatus, 5000);
+                btn.disabled = false;
+                return;
             }
 
             try {
-
                 // Parse the HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                // Find the medal table - it's the first wikitable
-                const table = doc.querySelector('table.wikitable');
-
-                if (!table) {
-                    throw new Error('Medal table not found on Wikipedia page');
-                }
-
-                // Extract medal data from table rows
-                const rows = table.querySelectorAll('tbody tr');
+                // ESPN uses table elements - find all tables and look for medal data
+                const tables = doc.querySelectorAll('table');
                 let updatedCount = 0;
 
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td, th');
+                // Look through all tables to find medal data
+                tables.forEach(table => {
+                    const rows = table.querySelectorAll('tr');
 
-                    // Skip header rows or rows without enough cells
-                    if (cells.length < 5) return;
+                    rows.forEach(row => {
+                        const cells = row.querySelectorAll('td, th');
+                        if (cells.length < 4) return; // Need at least country, gold, silver, bronze
 
-                    // Get country name (usually in the second cell, sometimes with a link)
-                    const countryCell = cells[1];
-                    if (!countryCell) return;
+                        // Try to find country name and medal counts in the row
+                        let countryName = null;
+                        let goldIdx = -1, silverIdx = -1, bronzeIdx = -1;
 
-                    let countryName = countryCell.textContent.trim();
+                        // Look through cells to find country name and numeric medal values
+                        cells.forEach((cell, idx) => {
+                            const text = cell.textContent.trim();
 
-                    // Clean up country name (remove extra whitespace, special characters)
-                    countryName = countryName.replace(/\s+/g, ' ').replace(/\*/g, '').trim();
+                            // Country name: text that's not a number and longer than 2 chars
+                            if (!countryName && text && !/^\d+$/.test(text) && text.length > 2) {
+                                const cleaned = text.replace(/\s+/g, ' ').replace(/\*/g, '').trim();
+                                // Exclude header text
+                                if (cleaned.length > 2 && !['Gold', 'Silver', 'Bronze', 'Total', 'Group', 'Rank'].includes(cleaned)) {
+                                    countryName = cleaned;
+                                }
+                            }
 
-                    // Try to match with our draft countries
-                    const matchedCountry = findMatchingCountry(countryName);
+                            // Medal counts are numeric values
+                            if (/^\d+$/.test(text)) {
+                                if (goldIdx === -1) goldIdx = idx;
+                                else if (silverIdx === -1) silverIdx = idx;
+                                else if (bronzeIdx === -1) bronzeIdx = idx;
+                            }
+                        });
 
-                    if (matchedCountry) {
-                        // Extract medal counts (usually in cells 2, 3, 4)
-                        const gold = parseInt(cells[2]?.textContent.trim()) || 0;
-                        const silver = parseInt(cells[3]?.textContent.trim()) || 0;
-                        const bronze = parseInt(cells[4]?.textContent.trim()) || 0;
+                        // If we found a country and medal counts, try to match and update
+                        if (countryName && goldIdx !== -1 && silverIdx !== -1 && bronzeIdx !== -1) {
+                            const matchedCountry = findMatchingCountry(countryName);
 
-                        // Update medal data
-                        medalData[matchedCountry] = { gold, silver, bronze };
-                        updatedCount++;
-                    }
+                            if (matchedCountry) {
+                                const gold = parseInt(cells[goldIdx]?.textContent.trim()) || 0;
+                                const silver = parseInt(cells[silverIdx]?.textContent.trim()) || 0;
+                                const bronze = parseInt(cells[bronzeIdx]?.textContent.trim()) || 0;
+
+                                medalData[matchedCountry] = { gold, silver, bronze };
+                                updatedCount++;
+                            }
+                        }
+                    });
                 });
 
                 // Refresh the table with new data
                 initializeTable();
 
-                showStatus(`✅ Successfully updated ${updatedCount} countries from Wikipedia!`, 'success');
+                if (updatedCount > 0) {
+                    showStatus(`✅ Successfully updated ${updatedCount} countries from ESPN!`, 'success');
+                } else {
+                    showStatus('⚠️ No medal data found. ESPN table structure may have changed.', 'error');
+                }
                 setTimeout(hideStatus, 5000);
 
             } catch (error) {
-                console.error('Error fetching Wikipedia data:', error);
+                console.error('Error parsing ESPN data:', error);
                 showStatus('❌ Error: ' + error.message, 'error');
                 setTimeout(hideStatus, 5000);
             } finally {
@@ -520,8 +538,8 @@
 
         initializeTable();
 
-        // Automatically fetch Wikipedia data when page loads
-        fetchWikipediaData();
+        // Automatically fetch ESPN medal data when page loads
+        fetchMedalData();
     </script>
 </body>
 </html>
