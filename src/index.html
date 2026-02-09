@@ -154,10 +154,109 @@
             }
         }
 
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th {
+                padding: 8px 4px;
+                font-size: 0.75em;
+            }
+
+            td {
+                padding: 8px 4px;
+            }
+
+            .competitor-name {
+                font-size: 0.9em;
+            }
+
+            .medal-input {
+                width: 40px;
+                padding: 6px 2px;
+                font-size: 0.9em;
+            }
+
+            .btn-group {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .update-btn, .wiki-btn {
+                padding: 12px 16px;
+                font-size: 1em;
+                min-height: 44px;
+            }
+
+            .leaderboard-row {
+                padding: 12px;
+                margin: 8px 0;
+            }
+
+            .leaderboard-name {
+                font-size: 1em;
+            }
+
+            .leaderboard-score {
+                font-size: 1.1em;
+            }
+
+            .table-container {
+                max-height: 60vh;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.3em;
+            }
+
+            table {
+                font-size: 0.75em;
+            }
+
+            th {
+                padding: 6px 2px;
+                font-size: 0.7em;
+            }
+
+            td {
+                padding: 6px 2px;
+            }
+
+            .medal-input {
+                width: 35px;
+                padding: 4px 1px;
+            }
+
+            .score {
+                font-size: 1em;
+            }
+        }
+
         .table-container {
             overflow-x: auto;
             max-height: 70vh;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .btn-group {
