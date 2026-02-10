@@ -412,6 +412,33 @@
         function calculateScores() {
             const scores = {};
 
+            // First, determine the top 10 countries by total medal count
+            const countryRankings = [];
+            Object.keys(medalData).forEach(country => {
+                const medals = medalData[country];
+                const totalMedals = medals.gold + medals.silver + medals.bronze;
+                if (totalMedals > 0) {
+                    countryRankings.push({
+                        country: country,
+                        total: totalMedals,
+                        gold: medals.gold,
+                        silver: medals.silver,
+                        bronze: medals.bronze
+                    });
+                }
+            });
+
+            // Sort by total medals (desc), then gold (desc), then silver (desc)
+            countryRankings.sort((a, b) => {
+                if (b.total !== a.total) return b.total - a.total;
+                if (b.gold !== a.gold) return b.gold - a.gold;
+                return b.silver - a.silver;
+            });
+
+            // Get top 10 countries
+            const top10Countries = new Set(countryRankings.slice(0, 10).map(c => c.country));
+
+            // Calculate scores for each player
             draftData.forEach(player => {
                 scores[player.competitor] = 0;
 
@@ -419,10 +446,15 @@
                     const medals = medalData[country] || { gold: 0, silver: 0, bronze: 0 };
                     const totalMedals = medals.gold + medals.silver + medals.bronze;
 
+                    // Base score: Gold = 5pt, Silver = 3pt, Bronze = 2pt
                     let countryScore = (medals.gold * 5) + (medals.silver * 3) + (medals.bronze * 2);
 
-                    if (totalMedals > 10) {
-                        countryScore += 2;
+                    // Chaos Modifier: If country is outside top 10, add +2 per medal
+                    const isOutsideTop10 = !top10Countries.has(country) && totalMedals > 0;
+                    let chaosBonus = 0;
+                    if (isOutsideTop10) {
+                        chaosBonus = totalMedals * 2;
+                        countryScore += chaosBonus;
                     }
 
                     scores[player.competitor] += countryScore;
@@ -431,9 +463,10 @@
                     const totalCell = document.getElementById(`total-${country}`);
 
                     if (scoreCell) {
-                        scoreCell.textContent = countryScore;
-                        if (totalMedals > 10) {
-                            scoreCell.innerHTML = `${countryScore} <span class="bonus">+2</span>`;
+                        if (isOutsideTop10) {
+                            scoreCell.innerHTML = `${countryScore} <span class="bonus">+${chaosBonus}</span>`;
+                        } else {
+                            scoreCell.textContent = countryScore;
                         }
                     }
 
