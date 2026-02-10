@@ -329,7 +329,9 @@
                                 <th class="gold">🥇 Gold (5pt)</th>
                                 <th class="silver">🥈 Silver (3pt)</th>
                                 <th class="bronze">🥉 Bronze (2pt)</th>
+                                <th>Country Rank</th>
                                 <th>Total Medals</th>
+                                <th>Chaos Bonus</th>
                                 <th>Score</th>
                             </tr>
                         </thead>
@@ -385,7 +387,9 @@
                         <td class="gold" id="gold-${country}">${medals.gold}</td>
                         <td class="silver" id="silver-${country}">${medals.silver}</td>
                         <td class="bronze" id="bronze-${country}">${medals.bronze}</td>
+                        <td id="rank-${country}">-</td>
                         <td id="total-${country}">${medals.gold + medals.silver + medals.bronze}</td>
+                        <td id="bonus-${country}">0</td>
                         <td id="score-${country}" class="score">0</td>
                     `;
                 });
@@ -423,6 +427,12 @@
             // Get top 10 countries
             const top10Countries = new Set(countryRankings.slice(0, 10).map(c => c.country));
 
+            // Create a map of country to rank
+            const countryRankMap = {};
+            countryRankings.forEach((country, index) => {
+                countryRankMap[country.country] = index + 1;
+            });
+
             // Calculate scores for each player
             draftData.forEach(player => {
                 scores[player.competitor] = 0;
@@ -448,23 +458,29 @@
                     const goldCell = document.getElementById(`gold-${country}`);
                     const silverCell = document.getElementById(`silver-${country}`);
                     const bronzeCell = document.getElementById(`bronze-${country}`);
-                    const scoreCell = document.getElementById(`score-${country}`);
+                    const rankCell = document.getElementById(`rank-${country}`);
                     const totalCell = document.getElementById(`total-${country}`);
+                    const bonusCell = document.getElementById(`bonus-${country}`);
+                    const scoreCell = document.getElementById(`score-${country}`);
 
                     if (goldCell) goldCell.textContent = medals.gold;
                     if (silverCell) silverCell.textContent = medals.silver;
                     if (bronzeCell) bronzeCell.textContent = medals.bronze;
 
-                    if (scoreCell) {
-                        if (isOutsideTop10) {
-                            scoreCell.innerHTML = `${countryScore} <span class="bonus">+${chaosBonus}</span>`;
-                        } else {
-                            scoreCell.textContent = countryScore;
-                        }
+                    if (rankCell) {
+                        rankCell.textContent = countryRankMap[country] || '-';
                     }
 
                     if (totalCell) {
                         totalCell.textContent = totalMedals;
+                    }
+
+                    if (bonusCell) {
+                        bonusCell.textContent = chaosBonus > 0 ? `+${chaosBonus}` : '0';
+                    }
+
+                    if (scoreCell) {
+                        scoreCell.textContent = countryScore;
                     }
                 });
             });
