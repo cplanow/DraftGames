@@ -64,6 +64,29 @@
             font-weight: 600;
             position: sticky;
             top: 0;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        th:hover {
+            background: #5568d3;
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.5;
+            font-size: 0.8em;
+        }
+
+        th.sort-asc::after {
+            content: ' ▲';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: ' ▼';
+            opacity: 1;
         }
 
         td {
@@ -324,15 +347,15 @@
                     <table id="countryTable">
                         <thead>
                             <tr>
-                                <th>Competitor</th>
-                                <th>Country</th>
-                                <th class="gold">🥇 Gold (5pt)</th>
-                                <th class="silver">🥈 Silver (3pt)</th>
-                                <th class="bronze">🥉 Bronze (2pt)</th>
-                                <th>Country Rank</th>
-                                <th>Total Medals</th>
-                                <th>Chaos Bonus</th>
-                                <th>Score</th>
+                                <th class="sortable" data-column="0" data-type="text">Competitor</th>
+                                <th class="sortable" data-column="1" data-type="text">Country</th>
+                                <th class="sortable gold" data-column="2" data-type="number">🥇 Gold (5pt)</th>
+                                <th class="sortable silver" data-column="3" data-type="number">🥈 Silver (3pt)</th>
+                                <th class="sortable bronze" data-column="4" data-type="number">🥉 Bronze (2pt)</th>
+                                <th class="sortable" data-column="5" data-type="number">Country Rank</th>
+                                <th class="sortable" data-column="6" data-type="number">Total Medals</th>
+                                <th class="sortable" data-column="7" data-type="number">Chaos Bonus</th>
+                                <th class="sortable" data-column="8" data-type="number">Score</th>
                             </tr>
                         </thead>
                         <tbody id="countryBody">
@@ -396,6 +419,70 @@
             });
 
             calculateScores();
+            makeSortable();
+        }
+
+        function makeSortable() {
+            const table = document.getElementById('countryTable');
+            const headers = table.querySelectorAll('th.sortable');
+
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = parseInt(this.dataset.column);
+                    const type = this.dataset.type;
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                    // Determine sort direction - toggle between asc and desc
+                    let newSort;
+                    if (this.classList.contains('sort-asc')) {
+                        newSort = 'desc';
+                    } else if (this.classList.contains('sort-desc')) {
+                        newSort = 'asc';
+                    } else {
+                        newSort = 'asc'; // First click = ascending
+                    }
+
+                    // Remove sort classes from all headers
+                    headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+
+                    // Add sort class to current header
+                    this.classList.add(newSort === 'asc' ? 'sort-asc' : 'sort-desc');
+
+                    // Sort rows
+                    rows.sort((a, b) => {
+                        const aCell = a.cells[column];
+                        const bCell = b.cells[column];
+
+                        let aVal = aCell.textContent.trim();
+                        let bVal = bCell.textContent.trim();
+
+                        if (type === 'number') {
+                            // Handle special cases like "+8" for bonus, "-" for rank
+                            aVal = aVal === '-' ? -999 : parseFloat(aVal.replace(/[^0-9.+-]/g, '')) || 0;
+                            bVal = bVal === '-' ? -999 : parseFloat(bVal.replace(/[^0-9.+-]/g, '')) || 0;
+
+                            // Ascending: low to high (1, 2, 3...)
+                            // Descending: high to low (3, 2, 1...)
+                            if (newSort === 'asc') {
+                                return aVal - bVal; // Low to high
+                            } else {
+                                return bVal - aVal; // High to low
+                            }
+                        } else {
+                            // Text comparison
+                            if (newSort === 'asc') {
+                                return aVal.localeCompare(bVal); // A to Z
+                            } else {
+                                return bVal.localeCompare(aVal); // Z to A
+                            }
+                        }
+                    });
+
+                    // Reappend sorted rows
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
         }
 
         function calculateScores() {
