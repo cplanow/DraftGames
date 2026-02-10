@@ -382,27 +382,12 @@
                     row.innerHTML = `
                         <td class="competitor-name">${player.competitor}</td>
                         <td>${country}</td>
-                        <td><input type="number" class="medal-input gold" value="${medals.gold}" min="0" data-country="${country}" data-medal="gold"></td>
-                        <td><input type="number" class="medal-input silver" value="${medals.silver}" min="0" data-country="${country}" data-medal="silver"></td>
-                        <td><input type="number" class="medal-input bronze" value="${medals.bronze}" min="0" data-country="${country}" data-medal="bronze"></td>
+                        <td class="gold" id="gold-${country}">${medals.gold}</td>
+                        <td class="silver" id="silver-${country}">${medals.silver}</td>
+                        <td class="bronze" id="bronze-${country}">${medals.bronze}</td>
                         <td id="total-${country}">${medals.gold + medals.silver + medals.bronze}</td>
                         <td id="score-${country}" class="score">0</td>
                     `;
-                });
-            });
-
-            document.querySelectorAll('.medal-input').forEach(input => {
-                input.addEventListener('change', function() {
-                    const country = this.dataset.country;
-                    const medalType = this.dataset.medal;
-                    const value = parseInt(this.value) || 0;
-
-                    if (!medalData[country]) {
-                        medalData[country] = { gold: 0, silver: 0, bronze: 0 };
-                    }
-                    medalData[country][medalType] = value;
-
-                    calculateScores();
                 });
             });
 
@@ -459,8 +444,16 @@
 
                     scores[player.competitor] += countryScore;
 
+                    // Update medal count displays
+                    const goldCell = document.getElementById(`gold-${country}`);
+                    const silverCell = document.getElementById(`silver-${country}`);
+                    const bronzeCell = document.getElementById(`bronze-${country}`);
                     const scoreCell = document.getElementById(`score-${country}`);
                     const totalCell = document.getElementById(`total-${country}`);
+
+                    if (goldCell) goldCell.textContent = medals.gold;
+                    if (silverCell) silverCell.textContent = medals.silver;
+                    if (bronzeCell) bronzeCell.textContent = medals.bronze;
 
                     if (scoreCell) {
                         if (isOutsideTop10) {
