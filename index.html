@@ -657,11 +657,14 @@
                 const tables = doc.querySelectorAll('table');
                 let updatedCount = 0;
 
-                // Look through all tables to find medal data
-                tables.forEach(table => {
-                    const rows = table.querySelectorAll('tr');
+                console.log(`Found ${tables.length} tables on ESPN page`);
 
-                    rows.forEach(row => {
+                // Look through all tables to find medal data
+                tables.forEach((table, tableIdx) => {
+                    const rows = table.querySelectorAll('tr');
+                    console.log(`Table ${tableIdx}: ${rows.length} rows`);
+
+                    rows.forEach((row, rowIdx) => {
                         const cells = row.querySelectorAll('td, th');
                         if (cells.length < 4) return; // Need at least country, gold, silver, bronze
 
@@ -693,6 +696,7 @@
                         // If we found a country and medal counts, try to match and update
                         if (countryName && goldIdx !== -1 && silverIdx !== -1 && bronzeIdx !== -1) {
                             const matchedCountry = findMatchingCountry(countryName);
+                            console.log(`Row ${rowIdx}: Found "${countryName}" -> Matched: ${matchedCountry || 'NO MATCH'}`);
 
                             if (matchedCountry) {
                                 const gold = parseInt(cells[goldIdx]?.textContent.trim()) || 0;
@@ -700,6 +704,7 @@
                                 const bronze = parseInt(cells[bronzeIdx]?.textContent.trim()) || 0;
 
                                 medalData[matchedCountry] = { gold, silver, bronze };
+                                console.log(`  Updated ${matchedCountry}: G${gold} S${silver} B${bronze}`);
                                 updatedCount++;
                             }
                         }
@@ -709,6 +714,7 @@
                 // Refresh the table with new data
                 initializeTable();
 
+                console.log(`Total countries updated: ${updatedCount}`);
                 if (updatedCount > 0) {
                     showStatus(`✅ Successfully updated ${updatedCount} countries from ESPN!`, 'success');
                 } else {
