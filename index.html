@@ -678,7 +678,10 @@
 
                             // Country name: text that's not a number and longer than 2 chars
                             if (!countryName && text && !/^\d+$/.test(text) && text.length > 2) {
-                                const cleaned = text.replace(/\s+/g, ' ').replace(/\*/g, '').trim();
+                                let cleaned = text.replace(/\s+/g, ' ').replace(/\*/g, '').trim();
+                                // ESPN prepends 3-letter country codes (e.g., "ITAItaly", "USAUnited States")
+                                // Remove them by matching uppercase letters at the start
+                                cleaned = cleaned.replace(/^[A-Z]{3}/, '');
                                 // Exclude header text
                                 if (cleaned.length > 2 && !['Gold', 'Silver', 'Bronze', 'Total', 'Group', 'Rank'].includes(cleaned)) {
                                     countryName = cleaned;
