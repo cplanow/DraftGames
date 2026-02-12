@@ -668,7 +668,7 @@
                     if (!countryCell) return;
 
                     const tds = row.querySelectorAll('td');
-                    // Expect: td[0]=rank, then th=country, td[1]=gold, td[2]=silver, td[3]=bronze, td[4]=total
+                    // Rows with shared ranks may lack a rank td (rowspan), so use last 4 tds
                     if (tds.length < 4) return;
 
                     // Extract country name from the <a> tag inside the <th>
@@ -676,9 +676,9 @@
                     let countryName = link ? link.textContent.trim() : countryCell.textContent.trim();
                     countryName = countryName.replace(/\*/g, '').trim();
 
-                    const gold = parseInt(tds[1]?.textContent.trim()) || 0;
-                    const silver = parseInt(tds[2]?.textContent.trim()) || 0;
-                    const bronze = parseInt(tds[3]?.textContent.trim()) || 0;
+                    const gold = parseInt(tds[tds.length - 4]?.textContent.trim()) || 0;
+                    const silver = parseInt(tds[tds.length - 3]?.textContent.trim()) || 0;
+                    const bronze = parseInt(tds[tds.length - 2]?.textContent.trim()) || 0;
 
                     const matchedCountry = findMatchingCountry(countryName);
                     console.log(`Found "${countryName}" -> Matched: ${matchedCountry || 'NO MATCH'} (G${gold} S${silver} B${bronze})`);
