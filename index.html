@@ -504,11 +504,11 @@
                 }
             });
 
-            // Sort by total medals (desc), then gold (desc), then silver (desc)
+            // Sort by gold (desc), then silver (desc), then bronze (desc) - standard Olympic ranking
             countryRankings.sort((a, b) => {
-                if (b.total !== a.total) return b.total - a.total;
                 if (b.gold !== a.gold) return b.gold - a.gold;
-                return b.silver - a.silver;
+                if (b.silver !== a.silver) return b.silver - a.silver;
+                return b.bronze - a.bronze;
             });
 
             // Get top 10 countries
